@@ -124,18 +124,18 @@ class PatternDiscoveryEngine:
         if self.modality == "tabular_continuous":
             df_train = train_data if isinstance(train_data, pd.DataFrame) else pd.DataFrame(train_data)
             self.feature_names = df_train.columns.tolist()
-            X_train = df_train[self.feature_names].to_numpy(dtype=float)
+            x_train = df_train[self.feature_names].to_numpy(dtype=float)
 
             self.continuous_suite = GeometricModelsSuite(random_state=self.random_state)
-            self.continuous_suite.fit(X_train)
+            self.continuous_suite.fit(x_train)
 
             if cal_data is not None:
                 df_cal = cal_data if isinstance(cal_data, pd.DataFrame) else pd.DataFrame(cal_data)
-                X_cal = df_cal[self.feature_names].to_numpy(dtype=float)
+                x_cal = df_cal[self.feature_names].to_numpy(dtype=float)
             else:
-                X_cal = X_train
+                x_cal = x_train
 
-            raw_scores = self.continuous_suite.compute_raw_scores(X_cal)
+            raw_scores = self.continuous_suite.compute_raw_scores(x_cal)
             self.calibrator.fit(raw_scores["Isolation Forest"])
 
         elif self.modality == "tabular_heterogeneous":
@@ -177,8 +177,8 @@ class PatternDiscoveryEngine:
         Returns:
             np.ndarray: 1D array of continuous non-conformity scores.
         """
-        X = df[self.feature_names].to_numpy(dtype=float)
-        scores = self.continuous_suite.compute_raw_scores(X)
+        x_data = df[self.feature_names].to_numpy(dtype=float)
+        scores = self.continuous_suite.compute_raw_scores(x_data)
 
         return scores["Isolation Forest"]
 
@@ -195,9 +195,9 @@ class PatternDiscoveryEngine:
         Returns:
             np.ndarray: 1D array of mean nearest-neighbor Gower distance scores.
         """
-        D = self.gower_metric.compute_distance_matrix(df, self.train_heterogeneous_ref_)
+        dist_matrix = self.gower_metric.compute_distance_matrix(df, self.train_heterogeneous_ref_)
 
-        return np.sort(D, axis=1)[:, :k].mean(axis=1)
+        return np.sort(dist_matrix, axis=1)[:, :k].mean(axis=1)
 
     def _score_sequential(self, sequences: list) -> np.ndarray:
         """
