@@ -1,5 +1,5 @@
 
-from typing import Dict, Sequence
+from typing import Dict, Optional, Sequence
 import numpy as np
 from sklearn.cluster import KMeans
 
@@ -43,7 +43,7 @@ class CollectiveCompositionDetector:
         self.is_fitted_: bool = False
 
 
-    def fit(self, X_train_scaled: np.ndarray) -> "CollectiveCompositionDetector":
+    def fit(self, x_train_scaled: np.ndarray) -> "CollectiveCompositionDetector":
         """
         Learns the baseline modal composition in the scaled training space.
 
@@ -51,7 +51,7 @@ class CollectiveCompositionDetector:
         computes the expected empirical cluster proportion vector.
 
         Args:
-            X_train_scaled (np.ndarray): Scaled training data array of shape
+            x_train_scaled (np.ndarray): Scaled training data array of shape
                 `(n_samples, n_features)`.
 
         Returns:
@@ -61,9 +61,9 @@ class CollectiveCompositionDetector:
             n_clusters=self.n_clusters,
             random_state=self.random_state,
             n_init=10,
-        ).fit(X_train_scaled)
+        ).fit(x_train_scaled)
 
-        train_labels = self.kmeans_.predict(X_train_scaled)
+        train_labels = self.kmeans_.predict(x_train_scaled)
         counts = np.bincount(train_labels, minlength=self.n_clusters).astype(float)
         
         self.baseline_proportions_ = counts / counts.sum()
