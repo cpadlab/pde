@@ -10,6 +10,11 @@ from sklearn.neighbors import LocalOutlierFactor
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import OneClassSVM
 
+MODEL_HDBSCAN = "HDBSCAN"
+MODEL_ISOLATION_FOREST = "Isolation Forest"
+MODEL_LOF = "LOF"
+MODEL_OCSVM = "One-Class SVM"
+
 
 class GeometricModelsSuite:
     """
@@ -46,7 +51,7 @@ class GeometricModelsSuite:
         self.is_fitted_: bool = False
 
 
-    def fit(self, X_train: np.ndarray) -> "GeometricModelsSuite":
+    def fit(self, x_train: np.ndarray) -> "GeometricModelsSuite":
         """
         Fits the scaler and all four detectors strictly on training data.
 
@@ -54,35 +59,35 @@ class GeometricModelsSuite:
         Isolation Forest, novelty-mode LOF, and One-Class SVM on the scaled features.
 
         Args:
-            X_train (np.ndarray): 2D array of continuous training data of shape
+            x_train (np.ndarray): 2D array of continuous training data of shape
                 `(n_samples, n_features)`.
 
         Returns:
             GeometricModelsSuite: The fitted model suite instance (`self`).
 
         Raises:
-            ValueError: If `X_train` is not a 2D array.
+            ValueError: If `x_train` is not a 2D array.
         """
-        X = np.asarray(X_train, dtype=float)
-        if X.ndim != 2:
-            raise ValueError(f"X_train must be two-dimensional, with dimensions {X.ndim}D.")
+        x_data = np.asarray(x_train, dtype=float)
+        if x_data.ndim != 2:
+            raise ValueError(f"x_train must be two-dimensional, with dimensions {x_data.ndim}D.")
 
-        self.scaler_ = StandardScaler().fit(X)
-        X_scaled = self.scaler_.transform(X)
+        self.scaler_ = StandardScaler().fit(x_data)
+        x_scaled = self.scaler_.transform(x_data)
 
         self.models_ = {
-            "HDBSCAN": hdbscan.HDBSCAN(
+            MODEL_HDBSCAN: hdbscan.HDBSCAN(
                 min_cluster_size=10, min_samples=5, metric="euclidean", prediction_data=True
-            ).fit(X_scaled),
-            "Isolation Forest": IsolationForest(
+            ).fit(x_scaled),
+            MODEL_ISOLATION_FOREST: IsolationForest(
                 n_estimators=250, contamination="auto", random_state=self.random_state
-            ).fit(X_scaled),
-            "LOF": LocalOutlierFactor(
+            ).fit(x_scaled),
+            MODEL_LOF: LocalOutlierFactor(
                 n_neighbors=20, novelty=True, metric="euclidean"
-            ).fit(X_scaled),
-            "One-Class SVM": OneClassSVM(
+            ).fit(x_scaled),
+            MODEL_OCSVM: OneClassSVM(
                 kernel="rbf", gamma="scale", nu=0.05
-            ).fit(X_scaled)
+            ).fit(x_scaled),
         }
 
         self.is_fitted_ = True
@@ -90,7 +95,7 @@ class GeometricModelsSuite:
         return self
 
 
-    def compute_raw_scores(self, X_query: np.ndarray) -> Dict[str, np.ndarray]:
+    def compute_raw_scores(self, x_query: np.ndarray) -> Dict[str, np.ndarray]:
         """
         Computes raw non-conformity anomaly scores for each detector.
 
@@ -105,7 +110,7 @@ class GeometricModelsSuite:
             - **One-Class SVM**: `-decision_function(X)`.
 
         Args:
-            X_query (np.ndarray): 2D array of query samples of shape
+            x_query (np.ndarray): 2D array of query samples of shape
                 `(n_query_samples, n_features)` to evaluate.
 
         Returns:
@@ -118,18 +123,18 @@ class GeometricModelsSuite:
         if not self.is_fitted_ or self.scaler_ is None:
             raise RuntimeError("You must execute .fit() before computing scores.")
 
-        X = np.asarray(X_query, dtype=float)
-        X_scaled = self.scaler_.transform(X)
+        x_data = np.asarray(x_query, dtype=float)
+        x_scaled = self.scaler_.transform(x_data)
         scores = {}
 
-        labels, strengths = hdbscan.approximate_predict(self.models_["HDBSCAN"], X_scaled)
+        labels, strengths = hdbscan.approximate_predict(self.models_[MODEL_HDBSCAN], x_scaled)
         hdb_scores = 1.0 - strengths
         hdb_scores[labels == -1] = 1.0
 
-        scores["HDBSCAN"] = hdb_scores
-        scores["Isolation Forest"] = -self.models_["Isolation Forest"].score_samples(X_scaled)
-        scores["LOF"] = -self.models_["LOF"].score_samples(X_scaled)
-        scores["One-Class SVM"] = -self.models_["One-Class SVM"].decision_function(X_scaled).ravel()
+        scores[MODEL_HDBSCAN] = hdb_scores
+        scores[MODEL_ISOLATION_FOREST] = -self.models_[MODEL_ISOLATION_FOREST].score_samples(x_scaled)
+        scores[MODEL_LOF] = -self.models_[MODEL_LOF].score_samples(x_scaled)
+        scores[MODEL_OCSVM] = -self.models_[MODEL_OCSVM].decision_function(x_scaled).ravel()
 
         return scores
 
