@@ -1,5 +1,5 @@
 
-from typing import Union, Sequence
+from typing import Sequence
 import numpy as np
 
 
@@ -53,7 +53,7 @@ class ConformalCalibrator:
         return self
 
 
-    def compute_pvalue(self, query_scores: Union[float, Sequence[float]]) -> np.ndarray:
+    def compute_pvalue(self, query_scores: float | Sequence[float]) -> np.ndarray:
         """
         Computes exact inductive conformal p-values for query scores.
 
@@ -61,7 +61,7 @@ class ConformalCalibrator:
             p(s) = (1 + sum(s_cal >= s)) / (N_cal + 1)
 
         Args:
-            query_scores (Union[float, Sequence[float]]): Single score or sequence
+            query_scores (float | Sequence[float]): Single score or sequence
                 of query scores to evaluate against the calibration distribution.
 
         Returns:
