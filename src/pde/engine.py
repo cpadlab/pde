@@ -1,7 +1,7 @@
 
 from pathlib import Path
 from datetime import datetime, timezone
-from typing import Any, Dict, Optional, Sequence, Union
+from typing import Any, Dict, Optional, Sequence
 import numpy as np
 import pandas as pd
 
@@ -122,49 +122,100 @@ class PatternDiscoveryEngine:
         self.categorical_features = profile.get("categorical_features", [])
 
         if self.modality == "tabular_continuous":
-            df_train = train_data if isinstance(train_data, pd.DataFrame) else pd.DataFrame(train_data)
-            self.feature_names = df_train.columns.tolist()
-            x_train = df_train[self.feature_names].to_numpy(dtype=float)
-
-            self.continuous_suite = GeometricModelsSuite(random_state=self.random_state)
-            self.continuous_suite.fit(x_train)
-
-            if cal_data is not None:
-                df_cal = cal_data if isinstance(cal_data, pd.DataFrame) else pd.DataFrame(cal_data)
-                x_cal = df_cal[self.feature_names].to_numpy(dtype=float)
-            else:
-                x_cal = x_train
-
-            raw_scores = self.continuous_suite.compute_raw_scores(x_cal)
-            self.calibrator.fit(raw_scores["Isolation Forest"])
-
+            self._fit_continuous(train_data, cal_data)
         elif self.modality == "tabular_heterogeneous":
-            df_train = train_data if isinstance(train_data, pd.DataFrame) else pd.DataFrame(train_data)
-            self.feature_names = self.numeric_features + self.categorical_features
-            self.train_heterogeneous_ref_ = df_train[self.feature_names].copy().reset_index(drop=True)
-
-            self.gower_metric = GowerDistanceMetric(
-                numeric_features=self.numeric_features,
-                categorical_features=self.categorical_features,
-            )
-            self.gower_metric.fit(self.train_heterogeneous_ref_)
-
-            df_cal = cal_data if cal_data is not None else df_train
-            cal_scores = self._score_heterogeneous(df_cal)
-            self.calibrator.fit(cal_scores)
-
+            self._fit_heterogeneous(train_data, cal_data)
         elif "sequential" in self.modality:
-            self.semi_markov_suite = SemiMarkovEngine(n_states=5, laplace_alpha=0.01)
-            self.semi_markov_suite.fit(train_data)
-
-            cal_seqs = cal_data if cal_data is not None else train_data
-            t_scores, d_scores = self.semi_markov_suite.score(cal_seqs)
-            cal_scores = t_scores + d_scores
-            self.calibrator.fit(cal_scores)
+            self._fit_sequential(train_data, cal_data)
 
         self.is_fitted = True
 
         return self
+
+
+    def _fit_continuous(self, train_data: Any, cal_data: Optional[Any] = None) -> None:
+        """
+        Fits the continuous geometric models suite and calibrates conformal scores.
+
+        Trains the four-model geometric detector suite on continuous training features,
+        computes raw anomaly scores on the calibration set using Isolation Forest,
+        and fits the empirical reference distribution in the conformal calibrator.
+
+        Args:
+            train_data (Any): Continuous training observations convertible to a
+                pandas DataFrame of shape `(n_train_samples, n_features)`.
+            cal_data (Optional[Any], optional): Held-out continuous calibration data
+                without data leakage. If None, falls back to `train_data`. Defaults
+                to None.
+        """
+        df_train = train_data if isinstance(train_data, pd.DataFrame) else pd.DataFrame(train_data)
+        self.feature_names = df_train.columns.tolist()
+        x_train = df_train[self.feature_names].to_numpy(dtype=float)
+
+        self.continuous_suite = GeometricModelsSuite(random_state=self.random_state)
+        self.continuous_suite.fit(x_train)
+
+        if cal_data is not None:
+            df_cal = cal_data if isinstance(cal_data, pd.DataFrame) else pd.DataFrame(cal_data)
+            x_cal = df_cal[self.feature_names].to_numpy(dtype=float)
+        else:
+            x_cal = x_train
+
+        raw_scores = self.continuous_suite.compute_raw_scores(x_cal)
+        self.calibrator.fit(raw_scores["Isolation Forest"])
+
+
+    def _fit_heterogeneous(self, train_data: Any, cal_data: Optional[Any] = None) -> None:
+        """
+        Fits the Gower distance metric and calibrates nearest-neighbor anomaly scores.
+
+        Stores reference training records for mixed data spaces, computes normalization
+        ranges for numeric columns, computes mean k-NN Gower distances across the
+        calibration set, and fits the conformal calibrator.
+
+        Args:
+            train_data (Any): Heterogeneous training observations containing both numeric
+                and categorical columns, convertible to a pandas DataFrame.
+            cal_data (Optional[Any], optional): Held-out heterogeneous calibration data.
+                If None, falls back to `train_data`. Defaults to None.
+        """
+        df_train = train_data if isinstance(train_data, pd.DataFrame) else pd.DataFrame(train_data)
+        self.feature_names = self.numeric_features + self.categorical_features
+        self.train_heterogeneous_ref_ = df_train[self.feature_names].copy().reset_index(drop=True)
+
+        self.gower_metric = GowerDistanceMetric(
+            numeric_features=self.numeric_features,
+            categorical_features=self.categorical_features,
+        )
+        self.gower_metric.fit(self.train_heterogeneous_ref_)
+
+        df_cal = cal_data if cal_data is not None else df_train
+        cal_scores = self._score_heterogeneous(df_cal)
+        self.calibrator.fit(cal_scores)
+
+
+    def _fit_sequential(self, train_data: Any, cal_data: Optional[Any] = None) -> None:
+        """
+        Fits the Semi-Markov engine and calibrates sequence non-conformity scores.
+
+        Estimates Laplace-smoothed discrete state transition probabilities and
+        Log-Normal duration densities from training sequences, evaluates combined
+        negative log-likelihood scores on calibration sequences, and fits the
+        conformal calibrator.
+
+        Args:
+            train_data (Any): Collection of sequence pairs `(events, durations)`
+                representing baseline operational trajectories.
+            cal_data (Optional[Any], optional): Independent calibration sequence
+                collection. If None, falls back to `train_data`. Defaults to None.
+        """
+        self.semi_markov_suite = SemiMarkovEngine(n_states=5, laplace_alpha=0.01)
+        self.semi_markov_suite.fit(train_data)
+
+        cal_seqs = cal_data if cal_data is not None else train_data
+        t_scores, d_scores = self.semi_markov_suite.score(cal_seqs)
+        cal_scores = t_scores + d_scores
+        self.calibrator.fit(cal_scores)
 
 
     def _score_continuous(self, df: pd.DataFrame) -> np.ndarray:
@@ -299,7 +350,7 @@ class PatternDiscoveryEngine:
         }
 
 
-    def save(self, filepath: Union[str, Path]) -> Path:
+    def save(self, filepath: str | Path) -> Path:
         """
         Serializes the engine state to disk as a JSON artifact.
 
@@ -307,7 +358,7 @@ class PatternDiscoveryEngine:
         and internal sub-model state dictionaries into an indented JSON file.
 
         Args:
-            filepath (Union[str, Path]): Destination file path.
+            filepath (str | Path): Destination file path.
 
         Returns:
             Path: The resolved file path where the JSON artifact was saved.
@@ -347,12 +398,12 @@ class PatternDiscoveryEngine:
 
 
     @classmethod
-    def load(cls, filepath: Union[str, Path]) -> "PatternDiscoveryEngine":
+    def load(cls, filepath: str | Path) -> "PatternDiscoveryEngine":
         """
         Reconstructs a PatternDiscoveryEngine instance from a serialized JSON file.
 
         Args:
-            filepath (Union[str, Path]): Path to the JSON model artifact.
+            filepath (str | Path): Path to the JSON model artifact.
 
         Returns:
             PatternDiscoveryEngine: Fully restored and calibrated engine instance.
