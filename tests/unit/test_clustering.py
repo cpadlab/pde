@@ -257,6 +257,44 @@ class TestRobustKMedoids:
         assert model.labels_[2] == model.labels_[3]
         assert model.labels_[0] != model.labels_[2]
 
+    def test_fit_handles_empty_cluster(self) -> None:
+        """
+        Verifies that k-medoids skips empty clusters when multiple identical points collapse into one medoid.
+        """
+        dist_matrix = np.array(
+            [
+                [0.0, 0.0, 10.0],
+                [0.0, 0.0, 10.0],
+                [10.0, 10.0, 0.0],
+            ]
+        )
+        model = RobustKMedoids(n_clusters=3, n_init=1, max_iter=2, random_state=42)
+        model.fit(dist_matrix)
+        assert model.labels_ is not None
+        assert model.medoid_indices_ is not None
+
+    def test_fit_reaches_max_iter_without_converging(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """
+        Verifies that k-medoids terminates normally after max_iter when new_medoids != medoid_indices.
+        """
+        dist_matrix = np.array(
+            [
+                [0.0, 10.0, 10.0, 10.0],
+                [10.0, 0.0, 1.0, 2.0],
+                [10.0, 1.0, 0.0, 1.0],
+                [10.0, 2.0, 1.0, 0.0],
+            ]
+        )
+        monkeypatch.setattr(
+            RobustKMedoids,
+            "_k_medoids_plus_plus_init",
+            staticmethod(lambda dist_mat, k, rng: [0, 1]),
+        )
+        model = RobustKMedoids(n_clusters=2, n_init=1, max_iter=1, random_state=42)
+        model.fit(dist_matrix)
+        assert model.labels_ is not None
+        assert np.array_equal(model.medoid_indices_, [0, 2])
+
     def test_predict_raises_runtime_error_if_not_fitted(self) -> None:
         """
         Ensures predict raises RuntimeError if called prior to fit.
