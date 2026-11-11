@@ -125,7 +125,7 @@ class PatternDiscoveryEngine:
             self._fit_continuous(train_data, cal_data)
         elif self.modality == "tabular_heterogeneous":
             self._fit_heterogeneous(train_data, cal_data)
-        elif "sequential" in self.modality:
+        else:
             self._fit_sequential(train_data, cal_data)
 
         self.is_fitted = True
@@ -384,14 +384,14 @@ class PatternDiscoveryEngine:
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
-        if self.modality == "tabular_continuous" and self.continuous_suite:
+        if self.modality == "tabular_continuous":
             state["continuous_suite"] = self.continuous_suite.to_dict()
 
-        elif self.modality == "tabular_heterogeneous" and self.gower_metric:
+        elif self.modality == "tabular_heterogeneous":
             state["gower_metric"] = self.gower_metric.to_dict()
             state["train_heterogeneous_ref"] = self.train_heterogeneous_ref_.to_dict(orient="records")
 
-        elif self.modality and "sequential" in self.modality and self.semi_markov_suite:
+        else:
             state["semi_markov"] = self.semi_markov_suite.to_dict()
 
         return ModelSerializer.save_json(state, Path(filepath))
@@ -423,14 +423,14 @@ class PatternDiscoveryEngine:
         engine.categorical_features = state["categorical_features"]
         engine.calibrator = ConformalCalibrator.from_dict(state["calibrator"])
 
-        if engine.modality == "tabular_continuous" and "continuous_suite" in state:
+        if engine.modality == "tabular_continuous":
             engine.continuous_suite = GeometricModelsSuite.from_dict(state["continuous_suite"])
 
         elif engine.modality == "tabular_heterogeneous":
             engine.gower_metric = GowerDistanceMetric.from_dict(state["gower_metric"])
             engine.train_heterogeneous_ref_ = pd.DataFrame(state["train_heterogeneous_ref"])
 
-        elif engine.modality and "sequential" in engine.modality:
+        else:
             engine.semi_markov_suite = SemiMarkovEngine.from_dict(state["semi_markov"])
 
         engine.is_fitted = True
