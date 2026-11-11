@@ -14,7 +14,7 @@ class SemiMarkovEngine:
     Attributes:
         n_states (int): Total number of discrete states in the state space.
         laplace_alpha (float): Additive smoothing parameter for transition counts.
-        P_hat_ (Optional[np.ndarray]): Transition probability matrix of shape
+        p_hat_ (Optional[np.ndarray]): Transition probability matrix of shape
             `(n_states, n_states)`. None before `fit`.
         duration_params_ (Dict[int, Tuple[float, float]]): Mapping from state
             index to Log-Normal parameters `(mu, sigma)`.
@@ -33,9 +33,22 @@ class SemiMarkovEngine:
         self.n_states = int(n_states)
         self.laplace_alpha = float(laplace_alpha)
 
-        self.P_hat_: Optional[np.ndarray] = None
+        self.p_hat_: Optional[np.ndarray] = None
         self.duration_params_: Dict[int, Tuple[float, float]] = {}
         self.is_fitted_: bool = False
+
+
+    @property
+    def P_hat_(self) -> Optional[np.ndarray]:
+        """
+        Backward-compatible property for transition probability matrix.
+        """
+        return self.p_hat_
+
+
+    @P_hat_.setter
+    def P_hat_(self, value: Optional[np.ndarray]) -> None:
+        self.p_hat_ = value
 
 
     def fit(self, train_sequences: Sequence[Tuple[Sequence[int], Sequence[float]]]) -> "SemiMarkovEngine":
@@ -67,7 +80,7 @@ class SemiMarkovEngine:
                 counts[u, v] += 1.0
                 durations_by_state[u].append(dt)
 
-        self.P_hat_ = counts / counts.sum(axis=1, keepdims=True)
+        self.p_hat_ = counts / counts.sum(axis=1, keepdims=True)
 
         self.duration_params_ = {}
         for u in range(self.n_states):
@@ -84,7 +97,6 @@ class SemiMarkovEngine:
         self.is_fitted_ = True
 
         return self
-
 
     def score(
         self, sequences: Sequence[Tuple[Sequence[int], Sequence[float]]]
@@ -109,7 +121,7 @@ class SemiMarkovEngine:
         Raises:
             RuntimeError: If called before fitting the engine with `fit`.
         """
-        if not self.is_fitted_ or self.P_hat_ is None:
+        if not self.is_fitted_ or self.p_hat_ is None:
             raise RuntimeError("The semi-Markovian model must be fitted using .fit() before scoring.")
 
         trans_nlls = []
@@ -123,7 +135,7 @@ class SemiMarkovEngine:
                 continue
 
             log_p_trans = [
-                np.log(max(1e-9, self.P_hat_[int(evs[t]), int(evs[t + 1])]))
+                np.log(max(1e-9, self.p_hat_[int(evs[t]), int(evs[t + 1])]))
                 for t in range(len(durs))
             ]
 
@@ -141,26 +153,25 @@ class SemiMarkovEngine:
                     - log_dt
                     - ((log_dt - mu) ** 2) / (2.0 * (sigma ** 2))
                 )
-                
+
                 log_p_durs.append(ll)
 
             dur_nlls.append(-float(np.mean(log_p_durs)))
 
         return np.asarray(trans_nlls, dtype=float), np.asarray(dur_nlls, dtype=float)
 
-
     def to_dict(self) -> dict:
         """
         Serializes the engine parameters and state into a dictionary.
 
         Returns:
-            dict: Dictionary containing `n_states`, `laplace_alpha`, `P_hat`,
+            dict: Dictionary containing `n_states`, `laplace_alpha`, `p_hat`,
                 `duration_params`, and `is_fitted`.
         """
         return {
             "n_states": self.n_states,
             "laplace_alpha": self.laplace_alpha,
-            "P_hat": self.P_hat_.tolist() if self.P_hat_ is not None else None,
+            "p_hat": self.p_hat_.tolist() if self.p_hat_ is not None else None,
             "duration_params": {str(k): list(v) for k, v in self.duration_params_.items()},
             "is_fitted": self.is_fitted_,
         }
@@ -172,15 +183,16 @@ class SemiMarkovEngine:
 
         Args:
             data (dict): Dictionary with keys `'n_states'`, `'laplace_alpha'`,
-                `'P_hat'`, `'duration_params'`, and `'is_fitted'`.
+                `'p_hat'` (or legacy `'P_hat'`), `'duration_params'`, and `'is_fitted'`.
 
         Returns:
             SemiMarkovEngine: A restored instance with deserialized transition
                 matrix and duration parameters.
         """
         inst = cls(n_states=data["n_states"], laplace_alpha=data["laplace_alpha"])
-        inst.P_hat_ = np.array(data["P_hat"], dtype=float) if data["P_hat"] is not None else None
+        raw_p = data.get("p_hat", data.get("P_hat"))
+        inst.p_hat_ = np.array(raw_p, dtype=float) if raw_p is not None else None
         inst.duration_params_ = {int(k): tuple(v) for k, v in data["duration_params"].items()}
         inst.is_fitted_ = bool(data["is_fitted"])
-        
+
         return inst

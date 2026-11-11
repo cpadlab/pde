@@ -143,8 +143,8 @@ def main() -> None:
 
     print("\t• Estimated transition matrix P_hat (with Laplace smoothing):")
     states = ["AUTH", "VIEW", "INTERACT", "PAYMENT", "COMPLETE"]
-    if engine.P_hat_ is not None:
-        for i, row in enumerate(engine.P_hat_):
+    if engine.p_hat_ is not None:
+        for i, row in enumerate(engine.p_hat_):
             row_str = " ".join([f"{v:6.3f}" for v in row])
             print(f"\t  [{states[i]:8s}] -> {row_str}")
 
