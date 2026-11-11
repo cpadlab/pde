@@ -42,7 +42,7 @@ class QuantileDiscretizer:
         self.labels = list(labels) if labels else ["Low", "Medium", "High"]
         
         if len(self.labels) != self.n_bins:
-            raise ValueError(f"La cantidad de labels ({len(self.labels)}) debe coincidir con n_bins ({self.n_bins}).")
+            raise ValueError(f"The number of labels ({len(self.labels)}) must match n_bins ({self.n_bins}).")
 
         self.bin_edges_: Dict[str, np.ndarray] = {}
         self.feature_names_: List[str] = []

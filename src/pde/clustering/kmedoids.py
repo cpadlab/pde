@@ -165,7 +165,7 @@ class RobustKMedoids:
             RuntimeError: If called before fitting the model with `fit`.
         """
         if self.medoid_indices_ is None:
-            raise RuntimeError("El modelo debe ajustarse con .fit() antes de predecir.")
+            raise RuntimeError("The model must be fitted with .fit() before predicting.")
 
         dists_to_medoids = dist_matrix_to_train[:, self.medoid_indices_]
         assigned_clusters = np.argmin(dists_to_medoids, axis=1)

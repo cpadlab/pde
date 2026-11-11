@@ -239,7 +239,7 @@ class PatternDiscoveryEngine:
             RuntimeError: If called before fitting the engine via `fit`.
         """
         if not self.is_fitted:
-            raise RuntimeError("Debe ejecutar .fit() antes de predecir.")
+            raise RuntimeError("You must execute .fit() before predicting.")
 
         if self.modality == "tabular_continuous":
             df = query_data if isinstance(query_data, pd.DataFrame) else pd.DataFrame(query_data)

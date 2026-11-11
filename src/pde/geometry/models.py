@@ -116,7 +116,7 @@ class GeometricModelsSuite:
             RuntimeError: If called before fitting the suite with `fit`.
         """
         if not self.is_fitted_ or self.scaler_ is None:
-            raise RuntimeError("Debe ejecutar .fit() antes de calcular scores.")
+            raise RuntimeError("You must execute .fit() before computing scores.")
 
         X = np.asarray(X_query, dtype=float)
         X_scaled = self.scaler_.transform(X)
