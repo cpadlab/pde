@@ -1,6 +1,7 @@
 
 from typing import Any, Dict
-from .profiler import MetaDataProfiler
+
+from pde.core.profiler import MetaDataProfiler
 
 
 class AutoPipelineRouter:

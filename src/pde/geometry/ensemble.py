@@ -2,8 +2,8 @@
 from typing import Dict, Optional
 import numpy as np
 
-from ..calibration.conformal import ConformalCalibrator
-from .models import GeometricModelsSuite
+from pde.calibration.conformal import ConformalCalibrator
+from pde.geometry.models import GeometricModelsSuite
 
 
 class GeometricBonferroniEnsemble:

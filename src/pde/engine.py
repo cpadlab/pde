@@ -5,14 +5,14 @@ from typing import Any, Dict, Optional, Sequence, Union
 import numpy as np
 import pandas as pd
 
-from .core.profiler import MetaDataProfiler
-from .calibration.conformal import ConformalCalibrator
-from .calibration.selective import SelectiveClassifier
-from .drift.monitor import DistributionDriftMonitor
-from .geometry.models import GeometricModelsSuite
-from .clustering.gower import GowerDistanceMetric
-from .sequential.markov import SemiMarkovEngine
-from .persistence.serializers import ModelSerializer
+from pde.core.profiler import MetaDataProfiler
+from pde.calibration.conformal import ConformalCalibrator
+from pde.calibration.selective import SelectiveClassifier
+from pde.drift.monitor import DistributionDriftMonitor
+from pde.geometry.models import GeometricModelsSuite
+from pde.clustering.gower import GowerDistanceMetric
+from pde.sequential.markov import SemiMarkovEngine
+from pde.persistence.serializers import ModelSerializer
 
 
 class PatternDiscoveryEngine:
