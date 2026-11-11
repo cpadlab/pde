@@ -40,6 +40,16 @@ class TestSemiMarkovEngine:
         assert engine.duration_params_ == {}
         assert not engine.is_fitted_
 
+    def test_p_hat_setter_property(self) -> None:
+        """
+        Verifies backward-compatible setter property for P_hat_.
+        """
+        engine = SemiMarkovEngine(n_states=2)
+        dummy_matrix = np.array([[0.5, 0.5], [0.5, 0.5]])
+        engine.P_hat_ = dummy_matrix
+        assert engine.p_hat_ is dummy_matrix
+        assert engine.P_hat_ is dummy_matrix
+
     def test_fit_transition_matrix_stochastic_property(self) -> None:
         """
         Verifies that estimated transition matrix p_hat_ rows sum to 1.0 (stochastic matrix).
