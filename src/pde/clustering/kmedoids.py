@@ -115,7 +115,7 @@ class RobustKMedoids:
                 new_medoids = medoid_indices.copy()
                 for c in range(self.n_clusters):
                     
-                    cluster_pts = np.where(labels == c)[0]
+                    cluster_pts = np.nonzero(labels == c)[0]
                     if len(cluster_pts) == 0:
                         continue
                     

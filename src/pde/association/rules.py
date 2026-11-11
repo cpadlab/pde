@@ -164,7 +164,7 @@ class AssociationRuleScorer:
 
         explanations = []
         for i in range(len(transactions_df)):
-            broken = np.where(violations[i])[0]
+            broken = np.nonzero(violations[i])[0]
             explanations.append([rule_texts[idx] for idx in broken])
 
         return scores, explanations
