@@ -1,6 +1,9 @@
 
-from typing import Dict, Optional
+import base64
+import io
+from typing import Any, Dict, Optional
 import hdbscan
+import joblib
 import numpy as np
 from sklearn.ensemble import IsolationForest
 from sklearn.neighbors import LocalOutlierFactor
@@ -129,3 +132,43 @@ class GeometricModelsSuite:
         scores["One-Class SVM"] = -self.models_["One-Class SVM"].decision_function(X_scaled).ravel()
 
         return scores
+
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """
+        Serializes the suite parameters, scaler, and fitted models into a JSON-safe dictionary.
+
+        Returns:
+            Dict[str, Any]: Serialized dictionary containing the metadata and binary payload.
+        """
+        buffer = io.BytesIO()
+        joblib.dump({"scaler": self.scaler_, "models": self.models_}, buffer)
+        payload = base64.b64encode(buffer.getvalue()).decode("utf-8")
+
+        return {
+            "random_state": self.random_state,
+            "is_fitted": self.is_fitted_,
+            "payload": payload,
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "GeometricModelsSuite":
+        """
+        Reconstructs a GeometricModelsSuite instance from its serialized dictionary representation.
+
+        Args:
+            data (Dict[str, Any]): Dictionary output from `to_dict()`.
+
+        Returns:
+            GeometricModelsSuite: Fully restored suite instance with trained models.
+        """
+        instance = cls(random_state=data.get("random_state", 42))
+        instance.is_fitted_ = data.get("is_fitted", False)
+
+        if "payload" in data and data["payload"]:
+            buffer = io.BytesIO(base64.b64decode(data["payload"].encode("utf-8")))
+            artifacts = joblib.load(buffer)
+            instance.scaler_ = artifacts.get("scaler")
+            instance.models_ = artifacts.get("models", {})
+
+        return instance
