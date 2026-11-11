@@ -1,107 +1,78 @@
-# Pattern Discovery Engine (PDE)
+# Pattern Discovery Engine
 
-A unified library for classical machine learning, pattern discovery, and statistical anomaly detection with distribution-free false positive rate control.
+A production-ready Python library for classical machine learning, pattern discovery, and statistical anomaly detection with distribution-free false positive rate control.
 
 ---
 
 ## Overview
 
-Pattern Discovery Engine (PDE) is a classical machine learning library designed to discover underlying structures, quantify evidence, and detect anomalies across multiple data modalities.
+**Pattern Discovery Engine (`cp-pde`)** discovers underlying patterns and detects anomalies across diverse data modalities without relying on arbitrary heuristic score thresholds. 
 
-Unlike heuristic detectors that output incomparable raw scores, PDE integrates inductive conformal prediction to ensure strict Type I error bounds (FPR <= alpha) and supports tripartite selective decisions (`anomaly`, `review`, `no_alert`).
+By integrating **inductive conformal prediction**, `cp-pde` provides rigorous statistical Type I error bounds (False Positive Rate $\le \alpha$) and delivers a structured tripartite decision framework (`anomaly`, `review`, and `no_alert`) to safely manage borderline cases.
 
 ---
 
 ## Core Capabilities
 
-- Continuous Tabular Modeling: Geometric detector quartet (HDBSCAN, Isolation Forest, Local Outlier Factor, and One-Class SVM) combined via conservative Bonferroni conformal ensembles.
-- Heterogeneous Data: Leakage-free Gower distance metric computation coupled with Robust K-Medoids++ clustering and autonomous geometric elbow selection (KneeLocator).
-- Sequential and Temporal Dynamics: Semi-Markov modeling combining discrete transition probability matrices (Laplace smoothed) and continuous state-conditional Log-Normal holding times.
-- Symbolic Association and Rule Mining: Quantile discretization, Apriori rule mining pruned by lift and confidence, rule violation anomaly scoring, and directed dependency graph analysis.
-- Conformal Calibration and Selective Classification: Exact non-parametric p-values against calibration quantiles with formal false positive rate control and audited manual review zones.
-- Continuous Drift Monitoring: Kolmogorov-Smirnov goodness-of-fit testing on conformal p-values tracking deviations from standard uniformity U(0, 1), with optional autonomous re-adaptation.
-- Production Engine API: Central `PatternDiscoveryEngine` orchestrator that autonomously profiles input modality, routes to optimal pipelines, and persists to JSON with 100% numerical fidelity.
-
----
-
-## Project Structure
-
-```text
-pde/
-├── src/pde/
-│   ├── core/           # Meta-profiler and automatic pipeline router
-│   ├── geometry/       # Continuous models suite and Bonferroni ensemble
-│   ├── clustering/     # Gower distance, Robust K-Medoids++, and knee locator
-│   ├── sequential/     # Semi-Markov engine for trajectories and durations
-│   ├── association/    # Discretization, association rules, and dependency graphs
-│   ├── calibration/    # Conformal calibrator and selective classifier
-│   ├── drift/          # Kolmogorov-Smirnov distribution drift monitor
-│   ├── persistence/    # JSON serialization and reconstruction utilities
-│   └── engine.py       # Central PatternDiscoveryEngine production API
-├── examples/           # Standalone terminal workflows and demonstrations
-├── tests/              # Unit and integration test suites
-├── pyproject.toml      # Poetry package configuration and test options
-└── README.md
-```
+- **Continuous Tabular Data**: Geometric ensemble combining HDBSCAN, Isolation Forest, Local Outlier Factor (LOF), and One-Class SVM with Bonferroni-corrected conformal bounds.
+- **Heterogeneous / Mixed-Type Data**: Leakage-free Gower distance computation paired with robust k-Medoids++ clustering and automated elbow detection (`KneeLocator`).
+- **Sequential & Temporal Dynamics**: Semi-Markovian modeling coupling Laplace-smoothed transition matrices with state-conditional log-normal holding time distributions.
+- **Symbolic Association & Rule Mining**: Quantile-based feature discretization, Apriori rule extraction, contextual violation scoring, and dependency graphs.
+- **Conformal Calibration**: Distribution-free, non-parametric p-value inference with mathematically bounded false positive rates.
+- **Distribution Drift Monitoring**: Real-time Kolmogorov-Smirnov goodness-of-fit testing tracking shifts from uniform p-value distributions.
+- **Lossless Persistence**: Native JSON serialization and restoration preserving exact numerical state across save/load cycles.
 
 ---
 
 ## Installation
 
-Requirements: Python >= 3.12 (excluding 3.14.1 due to upstream wheel compatibility).
+Install the package via `pip`:
 
-Using Poetry:
+```bash
+pip install cp-pde
 
-```powershell
+```
+
+### Requirements
+
+* Python `>= 3.12` (excluding `3.14.1`)
+
+---
+
+## Package Structure
+
+| Module | Core Responsibility |
+| --- | --- |
+| `pde.geometry` | Continuous geometric anomaly detection suites and Bonferroni ensembles |
+| `pde.clustering` | Gower distance metrics, robust k-Medoids++, and optimal $k$ selection |
+| `pde.sequential` | Semi-Markovian trajectory modeling (state transitions and holding times) |
+| `pde.association` | Discretization, association rule mining, and contextual violation scoring |
+| `pde.calibration` | Non-parametric conformal calibration and selective tripartite classification |
+| `pde.drift` | Streaming Kolmogorov-Smirnov distribution drift monitoring |
+| `pde.persistence` | Full engine serialization and deserialization via JSON |
+
+---
+
+## Development
+
+Clone the repository and install development dependencies using [Poetry](https://python-poetry.org/):
+
+```bash
+git clone [https://github.com/cpadlab/pde.git](https://github.com/cpadlab/pde.git)
+cd pde
 poetry install
+
 ```
 
----
+Run test suite and coverage reports:
 
-## Quickstart
-
-```python
-import numpy as np
-import pandas as pd
-from pde import PatternDiscoveryEngine
-
-# 1. Prepare data
-X_train = pd.DataFrame(np.random.normal(0, 1, size=(300, 3)), columns=["a", "b", "c"])
-X_test = pd.DataFrame(np.random.normal(0, 1, size=(20, 3)), columns=["a", "b", "c"])
-
-# 2. Fit and calibrate
-engine = PatternDiscoveryEngine(alpha=0.05, review_boundary=0.20)
-engine.fit(X_train)
-
-# 3. Predict with conformal certainty
-predictions = engine.predict(X_test)
-
-print("Decisions:", predictions["decisions"])
-print("Conformal p-values:", predictions["p_values"])
-```
-
----
-
-## Running Examples
-
-The repository includes runnable end-to-end examples in the `examples/` directory:
-
-```powershell
-poetry run python examples/continuous_suite.py
-poetry run python examples/heterogeneous_gower.py
-poetry run python examples/sequential_markov.py
-poetry run python examples/association_rules.py
-poetry run python examples/conformal_inference.py
-poetry run python examples/drift_monitoring.py
-poetry run python examples/end_to_end_pipeline.py
-```
-
----
-
-## Running Tests
-
-Run the full unit and integration test suite:
-
-```powershell
+```bash
 poetry run pytest
+
 ```
+
+---
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](https://www.google.com/search?q=LICENSE) file for details.
