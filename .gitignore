@@ -2,3 +2,7 @@ __pycache__
 poetry.lock
 .venv
 .vscode
+.coverage
+.coverage**
+coverage.xml
+test-results.xml
