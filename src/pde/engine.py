@@ -333,11 +333,14 @@ class PatternDiscoveryEngine:
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
-        if self.modality == "tabular_heterogeneous" and self.gower_metric:
+        if self.modality == "tabular_continuous" and self.continuous_suite:
+            state["continuous_suite"] = self.continuous_suite.to_dict()
+
+        elif self.modality == "tabular_heterogeneous" and self.gower_metric:
             state["gower_metric"] = self.gower_metric.to_dict()
             state["train_heterogeneous_ref"] = self.train_heterogeneous_ref_.to_dict(orient="records")
 
-        elif "sequential" in self.modality and self.semi_markov_suite:
+        elif self.modality and "sequential" in self.modality and self.semi_markov_suite:
             state["semi_markov"] = self.semi_markov_suite.to_dict()
 
         return ModelSerializer.save_json(state, Path(filepath))
@@ -369,13 +372,16 @@ class PatternDiscoveryEngine:
         engine.categorical_features = state["categorical_features"]
         engine.calibrator = ConformalCalibrator.from_dict(state["calibrator"])
 
-        if engine.modality == "tabular_heterogeneous":
+        if engine.modality == "tabular_continuous" and "continuous_suite" in state:
+            engine.continuous_suite = GeometricModelsSuite.from_dict(state["continuous_suite"])
+
+        elif engine.modality == "tabular_heterogeneous":
             engine.gower_metric = GowerDistanceMetric.from_dict(state["gower_metric"])
             engine.train_heterogeneous_ref_ = pd.DataFrame(state["train_heterogeneous_ref"])
 
-        elif "sequential" in engine.modality:
+        elif engine.modality and "sequential" in engine.modality:
             engine.semi_markov_suite = SemiMarkovEngine.from_dict(state["semi_markov"])
 
         engine.is_fitted = True
-        
+
         return engine
