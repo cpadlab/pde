@@ -35,13 +35,14 @@ class TestSemiMarkovEngine:
         engine = SemiMarkovEngine(n_states=4, laplace_alpha=0.05)
         assert engine.n_states == 4
         assert engine.laplace_alpha == 0.05
+        assert engine.p_hat_ is None
         assert engine.P_hat_ is None
         assert engine.duration_params_ == {}
         assert not engine.is_fitted_
 
     def test_fit_transition_matrix_stochastic_property(self) -> None:
         """
-        Verifies that estimated transition matrix P_hat_ rows sum to 1.0 (stochastic matrix).
+        Verifies that estimated transition matrix p_hat_ rows sum to 1.0 (stochastic matrix).
         """
         train_seqs = [
             ([0, 1, 2], [1.0, 2.0]),
@@ -52,12 +53,13 @@ class TestSemiMarkovEngine:
         engine.fit(train_seqs)
 
         assert engine.is_fitted_
+        assert engine.p_hat_ is not None
         assert engine.P_hat_ is not None
-        assert engine.P_hat_.shape == (3, 3)
+        assert engine.p_hat_.shape == (3, 3)
 
-        row_sums = engine.P_hat_.sum(axis=1)
+        row_sums = engine.p_hat_.sum(axis=1)
         assert np.allclose(row_sums, 1.0)
-        assert np.all(engine.P_hat_ > 0.0)
+        assert np.all(engine.p_hat_ > 0.0)
 
     def test_fit_unvisited_state_duration_fallback(self) -> None:
         """
@@ -139,13 +141,14 @@ class TestSemiMarkovEngine:
         assert serialized["n_states"] == 3
         assert serialized["laplace_alpha"] == 0.02
         assert serialized["is_fitted"] is True
-        assert isinstance(serialized["P_hat"], list)
+        assert isinstance(serialized["p_hat"], list)
         assert "0" in serialized["duration_params"]
 
         reconstructed = SemiMarkovEngine.from_dict(serialized)
         assert reconstructed.is_fitted_ is True
         assert reconstructed.n_states == engine.n_states
         assert reconstructed.laplace_alpha == engine.laplace_alpha
+        assert np.allclose(reconstructed.p_hat_, engine.p_hat_)
         assert np.allclose(reconstructed.P_hat_, engine.P_hat_)
         assert reconstructed.duration_params_ == engine.duration_params_
 
@@ -157,14 +160,15 @@ class TestSemiMarkovEngine:
 
     def test_to_dict_unfitted_state(self) -> None:
         """
-        Verifies serialization of an unfitted engine where P_hat_ is None.
+        Verifies serialization of an unfitted engine where p_hat_ is None.
         """
         engine = SemiMarkovEngine(n_states=4)
         serialized = engine.to_dict()
-        assert serialized["P_hat"] is None
+        assert serialized["p_hat"] is None
         assert serialized["is_fitted"] is False
 
         reconstructed = SemiMarkovEngine.from_dict(serialized)
+        assert reconstructed.p_hat_ is None
         assert reconstructed.P_hat_ is None
         assert reconstructed.is_fitted_ is False
 
