@@ -36,19 +36,8 @@ class TestSemiMarkovEngine:
         assert engine.n_states == 4
         assert engine.laplace_alpha == 0.05
         assert engine.p_hat_ is None
-        assert engine.P_hat_ is None
         assert engine.duration_params_ == {}
         assert not engine.is_fitted_
-
-    def test_p_hat_setter_property(self) -> None:
-        """
-        Verifies backward-compatible setter property for P_hat_.
-        """
-        engine = SemiMarkovEngine(n_states=2)
-        dummy_matrix = np.array([[0.5, 0.5], [0.5, 0.5]])
-        engine.P_hat_ = dummy_matrix
-        assert engine.p_hat_ is dummy_matrix
-        assert engine.P_hat_ is dummy_matrix
 
     def test_fit_transition_matrix_stochastic_property(self) -> None:
         """
@@ -64,7 +53,6 @@ class TestSemiMarkovEngine:
 
         assert engine.is_fitted_
         assert engine.p_hat_ is not None
-        assert engine.P_hat_ is not None
         assert engine.p_hat_.shape == (3, 3)
 
         row_sums = engine.p_hat_.sum(axis=1)
@@ -159,7 +147,6 @@ class TestSemiMarkovEngine:
         assert reconstructed.n_states == engine.n_states
         assert reconstructed.laplace_alpha == engine.laplace_alpha
         assert np.allclose(reconstructed.p_hat_, engine.p_hat_)
-        assert np.allclose(reconstructed.P_hat_, engine.P_hat_)
         assert reconstructed.duration_params_ == engine.duration_params_
 
         query = [([0, 1], [1.5])]
@@ -179,7 +166,6 @@ class TestSemiMarkovEngine:
 
         reconstructed = SemiMarkovEngine.from_dict(serialized)
         assert reconstructed.p_hat_ is None
-        assert reconstructed.P_hat_ is None
         assert reconstructed.is_fitted_ is False
 
     def test_sequential_with_conftest_fixture(

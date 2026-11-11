@@ -38,19 +38,6 @@ class SemiMarkovEngine:
         self.is_fitted_: bool = False
 
 
-    @property
-    def P_hat_(self) -> Optional[np.ndarray]:
-        """
-        Backward-compatible property for transition probability matrix.
-        """
-        return self.p_hat_
-
-
-    @P_hat_.setter
-    def P_hat_(self, value: Optional[np.ndarray]) -> None:
-        self.p_hat_ = value
-
-
     def fit(self, train_sequences: Sequence[Tuple[Sequence[int], Sequence[float]]]) -> "SemiMarkovEngine":
         """
         Fits transition probabilities and state duration distributions from training sequences.
