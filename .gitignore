@@ -6,3 +6,4 @@ poetry.lock
 .coverage**
 coverage.xml
 test-results.xml
+.scannerwork
