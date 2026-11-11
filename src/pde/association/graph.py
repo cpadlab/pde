@@ -1,5 +1,5 @@
 
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 import networkx as nx
 import numpy as np
 import pandas as pd
