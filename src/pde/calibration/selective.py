@@ -1,5 +1,5 @@
 
-from typing import Union, Sequence, Dict
+from typing import Sequence, Dict
 import numpy as np
 
 
@@ -40,7 +40,7 @@ class SelectiveClassifier:
         self.review_boundary = float(review_boundary)
 
 
-    def decide(self, p_values: Union[float, Sequence[float]]) -> np.ndarray:
+    def decide(self, p_values: float | Sequence[float]) -> np.ndarray:
         """
         Maps conformal p-values to operational decision labels.
 
@@ -50,7 +50,7 @@ class SelectiveClassifier:
             - `p >= review_boundary`: `'no_alert'` (consistent with normal behavior).
 
         Args:
-            p_values (Union[float, Sequence[float]]): Single p-value or sequence
+            p_values (float | Sequence[float]): Single p-value or sequence
                 of p-values to categorize.
 
         Returns:
@@ -94,13 +94,10 @@ class SelectiveClassifier:
         y_dec = np.asarray(decisions)
 
         automatic_mask = y_dec != "review"
-        total_samples = len(y_true)
         coverage = float(np.mean(automatic_mask))
 
         tp = np.sum((y_true == 1) & (y_dec == "anomaly"))
         fp = np.sum((y_true == 0) & (y_dec == "anomaly"))
-        fn = np.sum((y_true == 1) & (y_dec == "no_alert"))
-        tn = np.sum((y_true == 0) & (y_dec == "no_alert"))
         reviewed_anoms = np.sum((y_true == 1) & (y_dec == "review"))
 
         total_anomalies = np.sum(y_true == 1)
