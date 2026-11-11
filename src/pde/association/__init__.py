@@ -1,7 +1,7 @@
 
-from .discretizer import QuantileDiscretizer
-from .rules import AssociationRuleScorer
-from .graph import DependencyGraphEngine
+from pde.association.discretizer import QuantileDiscretizer
+from pde.association.rules import AssociationRuleScorer
+from pde.association.graph import DependencyGraphEngine
 
 __all__ = [
     "QuantileDiscretizer", 

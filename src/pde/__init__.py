@@ -1,5 +1,5 @@
 
-from .engine import PatternDiscoveryEngine
+from pde.engine import PatternDiscoveryEngine
 
 __version__ = "1.0.0"
 __all__ = [

@@ -1,6 +1,6 @@
 
-from .profiler import MetaDataProfiler
-from .router import AutoPipelineRouter
+from pde.core.profiler import MetaDataProfiler
+from pde.core.router import AutoPipelineRouter
 
 __all__ = [
     "MetaDataProfiler", 
