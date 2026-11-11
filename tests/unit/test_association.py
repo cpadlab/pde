@@ -363,11 +363,11 @@ class TestDependencyGraphEngine:
         """
         rules_data = pd.DataFrame(
             {
-                "antecedents": [frozenset(["A"]), frozenset(["B"]), frozenset(["A"])],
-                "consequents": [frozenset(["B"]), frozenset(["C"]), frozenset(["B"])],
-                "lift": [2.5, 1.8, 3.0],
-                "confidence": [0.8, 0.7, 0.9],
-                "support": [0.4, 0.3, 0.5],
+                "antecedents": [frozenset(["A"]), frozenset(["B"]), frozenset(["A"]), frozenset(["A"])],
+                "consequents": [frozenset(["B"]), frozenset(["C"]), frozenset(["B"]), frozenset(["B"])],
+                "lift": [2.5, 1.8, 3.0, 1.0],
+                "confidence": [0.8, 0.7, 0.9, 0.2],
+                "support": [0.4, 0.3, 0.5, 0.1],
             }
         )
         G, edges_df = DependencyGraphEngine.build_association_graph(rules_data)
