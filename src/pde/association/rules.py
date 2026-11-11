@@ -31,8 +31,8 @@ class AssociationRuleScorer:
     """
 
     def __init__(
-        self, min_support: float = 0.05, min_confidence: float = 0.50, m
-        in_lift: float = 1.10, max_len: int = 3
+        self, min_support: float = 0.05, min_confidence: float = 0.50,
+        min_lift: float = 1.10, max_len: int = 3
     ) -> None:
         """
         Initializes the AssociationRuleScorer with rule-mining hyperparameters.
