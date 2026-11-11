@@ -97,8 +97,8 @@ class AssociationRuleScorer:
             return self
 
         rules = rules[rules["lift"] >= self.min_lift].copy()
-        rules["antecedents_str"] = rules["antecedents"].apply(lambda s: ", ".join(sorted(list(s))))
-        rules["consequents_str"] = rules["consequents"].apply(lambda s: ", ".join(sorted(list(s))))
+        rules["antecedents_str"] = rules["antecedents"].apply(lambda s: ", ".join(sorted(s)))
+        rules["consequents_str"] = rules["consequents"].apply(lambda s: ", ".join(sorted(s)))
         rules["rule_repr"] = rules["antecedents_str"] + " => " + rules["consequents_str"]
 
         self.rules_df_ = rules
@@ -146,8 +146,8 @@ class AssociationRuleScorer:
         rule_texts = self.rules_df_["rule_repr"].tolist()
 
         for _, r in self.rules_df_.iterrows():
-            ant_cols = [c for c in list(r["antecedents"]) if c in all_cols]
-            con_cols = [c for c in list(r["consequents"]) if c in all_cols]
+            ant_cols = [c for c in r["antecedents"] if c in all_cols]
+            con_cols = [c for c in r["consequents"] if c in all_cols]
 
             ant_m = transactions_df[ant_cols].all(axis=1).to_numpy() if ant_cols else np.zeros(len(transactions_df), dtype=bool)
             con_m = transactions_df[con_cols].all(axis=1).to_numpy() if con_cols else np.zeros(len(transactions_df), dtype=bool)
@@ -155,11 +155,11 @@ class AssociationRuleScorer:
             antecedent_masks.append(ant_m)
             consequent_masks.append(con_m)
 
-        A = np.column_stack(antecedent_masks)
-        C = np.column_stack(consequent_masks)
-        violations = A & (~C)
+        a_mat = np.column_stack(antecedent_masks)
+        c_mat = np.column_stack(consequent_masks)
+        violations = a_mat & (~c_mat)
 
-        applicable_weights = np.maximum(1.0, np.sum(A * lifts, axis=1))
+        applicable_weights = np.maximum(1.0, np.sum(a_mat * lifts, axis=1))
         scores = np.sum(violations * lifts, axis=1) / applicable_weights
 
         explanations = []
