@@ -29,3 +29,11 @@ dev = [
 
 [tool.poetry]
 packages = [{ include = "pde", from = "src" }]
+
+[tool.pytest.ini_options]
+minversion = "9.2.0"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --strict-markers"
