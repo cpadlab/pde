@@ -45,8 +45,7 @@ class GeometricBonferroniEnsemble:
 
         self.is_calibrated_: bool = False
 
-
-    def fit(self, X_train: np.ndarray, X_calibration: np.ndarray) -> "GeometricBonferroniEnsemble":
+    def fit(self, x_train: np.ndarray, x_calibration: np.ndarray) -> "GeometricBonferroniEnsemble":
         """
         Fits base detectors on training data and calibrates non-parametric quantiles.
 
@@ -55,17 +54,17 @@ class GeometricBonferroniEnsemble:
         and fits empirical reference distributions for each calibrator.
 
         Args:
-            X_train (np.ndarray): Training dataset of shape `(n_train_samples, n_features)`
+            x_train (np.ndarray): Training dataset of shape `(n_train_samples, n_features)`
                 containing strictly normal/reference data.
-            X_calibration (np.ndarray): Held-out calibration dataset of shape
+            x_calibration (np.ndarray): Held-out calibration dataset of shape
                 `(n_cal_samples, n_features)` without data leakage.
 
         Returns:
             GeometricBonferroniEnsemble: The fitted and calibrated ensemble instance (`self`).
         """
-        self.suite.fit(X_train)
+        self.suite.fit(x_train)
 
-        cal_scores = self.suite.compute_raw_scores(X_calibration)
+        cal_scores = self.suite.compute_raw_scores(x_calibration)
 
         for algo in self.ALGORITHMS:
             self.calibrators_[algo].fit(cal_scores[algo])
@@ -74,8 +73,7 @@ class GeometricBonferroniEnsemble:
 
         return self
 
-
-    def predict_pvalues(self, X_query: np.ndarray) -> Dict[str, np.ndarray]:
+    def predict_pvalues(self, x_query: np.ndarray) -> Dict[str, np.ndarray]:
         """
         Calculates individual conformal p-values and the aggregated Bonferroni ensemble.
 
@@ -85,7 +83,7 @@ class GeometricBonferroniEnsemble:
             p_ens = min(1.0, M * min(p_1, ..., p_M))
 
         Args:
-            X_query (np.ndarray): Query observation array of shape
+            x_query (np.ndarray): Query observation array of shape
                 `(n_query_samples, n_features)` to evaluate.
 
         Returns:
@@ -99,7 +97,7 @@ class GeometricBonferroniEnsemble:
         if not self.is_calibrated_:
             raise RuntimeError("The model must be calibrated using .fit() before making predictions.")
 
-        query_scores = self.suite.compute_raw_scores(X_query)
+        query_scores = self.suite.compute_raw_scores(x_query)
         pvalues_dict = {}
 
         for algo in self.ALGORITHMS:
