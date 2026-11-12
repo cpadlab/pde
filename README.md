@@ -1,74 +1,60 @@
 # Pattern Discovery Engine
 
-A production-ready Python library for classical machine learning, pattern discovery, and statistical anomaly detection with distribution-free false positive rate control.
+A Python laboratory and library exploring classical machine learning, pattern discovery, and conformal anomaly detection from first principles—without LLMs or black-box shortcuts.
+
+> Read the full research notes and experimental breakdown in the [development article](https://cpadlab.github.io/posts/pattern-discovery-engine).
 
 ---
 
 ## Overview
 
-**Pattern Discovery Engine (`cp-pde`)** discovers underlying patterns and detects anomalies across diverse data modalities without relying on arbitrary heuristic score thresholds. 
+**Pattern Discovery Engine (`cp-pde`)** evolved from a standalone clustering script into a modular Python package designed to test how classical algorithms behave, fail, and calibrate under controlled synthetic conditions.
 
-By integrating **inductive conformal prediction**, `cp-pde` provides rigorous statistical Type I error bounds (False Positive Rate $\le \alpha$) and delivers a structured tripartite decision framework (`anomaly`, `review`, and `no_alert`) to safely manage borderline cases.
-
----
-
-## Core Capabilities
-
-- **Continuous Tabular Data**: Geometric ensemble combining HDBSCAN, Isolation Forest, Local Outlier Factor (LOF), and One-Class SVM with Bonferroni-corrected conformal bounds.
-- **Heterogeneous / Mixed-Type Data**: Leakage-free Gower distance computation paired with robust k-Medoids++ clustering and automated elbow detection (`KneeLocator`).
-- **Sequential & Temporal Dynamics**: Semi-Markovian modeling coupling Laplace-smoothed transition matrices with state-conditional log-normal holding time distributions.
-- **Symbolic Association & Rule Mining**: Quantile-based feature discretization, Apriori rule extraction, contextual violation scoring, and dependency graphs.
-- **Conformal Calibration**: Distribution-free, non-parametric p-value inference with mathematically bounded false positive rates.
-- **Distribution Drift Monitoring**: Real-time Kolmogorov-Smirnov goodness-of-fit testing tracking shifts from uniform p-value distributions.
-- **Lossless Persistence**: Native JSON serialization and restoration preserving exact numerical state across save/load cycles.
+Instead of relying on arbitrary score thresholds, the lab grounds every detector in **inductive conformal prediction**, providing distribution-free false positive control ($\text{FPR} \le \alpha$) and a tripartite decision framework (`anomaly`, `review`, `no_alert`) to abstain when statistical evidence is insufficient.
 
 ---
 
-## Installation
+## Lab Modules & Capabilities
 
-Install the package via `pip`:
+- **Geometric Detectors (`pde.geometry`)**: Benchmarks HDBSCAN, Isolation Forest, LOF, and One-Class SVM across distinct anomaly geometries, combining them via Bonferroni-corrected conformal bounds.
+- **Symbolic Rules & Graphs (`pde.association`)**: Quantile-based feature discretization, Apriori rule mining, contextual rule-violation scoring, and NetworkX co-occurrence graphs.
+- **Heterogeneous Clustering (`pde.clustering`)**: Leakage-free Gower distance paired with multi-start k-Medoids++ and automated $k$ selection via elbow detection.
+- **Temporal Sequences (`pde.sequential`)**: Semi-Markov models combining Laplace-smoothed transition matrices with log-normal inter-event holding times.
+- **Conformal Calibration (`pde.calibration`)**: Empirical p-value calibration on held-out partitions for scale-free ensembling and selective abstention (`review`).
+- **Label-Free Drift Monitoring (`pde.drift`)**: Streaming Kolmogorov-Smirnov tests detecting distribution shifts via deviations from uniform p-values, triggering automatic recalibration.
+- **Lossless Persistence (`pde.persistence`)**: Deterministic JSON serialization preserving exact engine state across `.save()` and `.load()` cycles.
+
+---
+
+## Quickstart
+
+Install via `pip` (requires Python `>= 3.12`, excluding `3.14.1`):
 
 ```bash
 pip install cp-pde
-
 ```
-
-### Requirements
-
-* Python `>= 3.12` (excluding `3.14.1`)
 
 ---
 
-## Package Structure
+## Laboratory Methodology
 
-| Module | Core Responsibility |
-| --- | --- |
-| `pde.geometry` | Continuous geometric anomaly detection suites and Bonferroni ensembles |
-| `pde.clustering` | Gower distance metrics, robust k-Medoids++, and optimal $k$ selection |
-| `pde.sequential` | Semi-Markovian trajectory modeling (state transitions and holding times) |
-| `pde.association` | Discretization, association rule mining, and contextual violation scoring |
-| `pde.calibration` | Non-parametric conformal calibration and selective tripartite classification |
-| `pde.drift` | Streaming Kolmogorov-Smirnov distribution drift monitoring |
-| `pde.persistence` | Full engine serialization and deserialization via JSON |
+All experiments in this repository follow three strict rules to prevent data leakage and p-hacking:
+
+1. **Controlled Seeds**: Evaluated across 5 fixed seeds (`42, 7, 123, 2026, 99`) to measure variance rather than best-case runs.
+2. **Strict Partitions**: Scalers, discretizers, and models are fitted exclusively on `train`; p-values are calibrated on an independent `calibration` split.
+3. **Diagnostic Honesty**: Metrics are validated on synthetic generators with negative controls to verify statistical properties, not as production guarantees.
 
 ---
 
 ## Development
 
-Clone the repository and install development dependencies using [Poetry](https://python-poetry.org/):
+Clone the repository and install dependencies with [Poetry](https://python-poetry.org/):
 
 ```bash
-git clone [https://github.com/cpadlab/pde.git](https://github.com/cpadlab/pde.git)
+git clone https://github.com/cpadlab/pde.git
 cd pde
 poetry install
-
-```
-
-Run test suite and coverage reports:
-
-```bash
 poetry run pytest
-
 ```
 
 ---
